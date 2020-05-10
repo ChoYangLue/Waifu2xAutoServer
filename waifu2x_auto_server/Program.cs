@@ -10,6 +10,7 @@ class MainClass
         #region 変数
         static string INPUT_DIR_PATH = @"/home/ken/server/input";
         static string OUTPUT_DIR_PATH = @"/home/ken/server/output";
+        static string ORDER_OPTION_PATH = @"/home/ken/server/waifu2x_option.txt";
 
         struct Order
         {
@@ -31,12 +32,14 @@ class MainClass
                     Console.WriteLine(file_list[i]);
                     Console.WriteLine(IsImageFile(file_list[i]));
                 }
+                string option_str = LoadOrderOption(ORDER_OPTION_PATH);
+                Console.WriteLine(option_str);
 
                 Order com;
                 foreach (string element in file_list)
                 {
                     com.order = @"waifu2x-converter-cpp";
-                    com.option = @"-i " + element + " -o " + OUTPUT_DIR_PATH + @"/" + Path.GetFileName(element) + " -m noise-scale --noise-level 1 --scale-ratio 1.5 -c 0";
+                    com.option = @"-i " + element + " -o " + OUTPUT_DIR_PATH + @"/" + Path.GetFileName(element) + option_str;
                     ExecOrder(com);
 
                     File.Delete(element);
@@ -125,5 +128,25 @@ class MainClass
             }
             return false;
         }
+
+        private static string LoadOrderOption(string filePath)
+        {
+            string ret_val = " -m noise-scale --noise-level 1 --scale-ratio 1.5 -c 0";
+
+            if (File.Exists(filePath) == false)
+            {
+                Console.WriteLine(filePath + " is not found. please check path");
+                return ret_val;
+            }
+            var encoding = System.Text.Encoding.GetEncoding("UTF-8");
+
+            var reader = new System.IO.StreamReader(filePath, encoding);
+            ret_val = reader.ReadLine();
+            reader.Close();
+
+            return ret_val;
+        }
+
+
     }
 }
