@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Net;
 
 namespace waifu2x_auto_server
 {
@@ -19,28 +20,35 @@ class MainClass
 
         public static void Main(string[] args)
     {
-        var file_list = new List<string>();
-        FileTimer(ref file_list);
-            for (int i=0;i<file_list.Count;i++)
-            {
-                Console.WriteLine(file_list[i]);
-            }
 
-            Order com;
-            foreach (string element in file_list)
+            while (true)
             {
-                com.order = @"waifu2x-converter-cpp";
-                com.option = @"-i " + element + " -o " + OUTPUT_DIR_PATH +@"/"+ Path.GetFileName(element) + " -m noise-scale --noise-level 1 --scale-ratio 1.5 -c 0";
-                ExecOrder(com);
+                var file_list = new List<string>();
+                FileTimer(ref file_list);
 
-                File.Delete(element);
+                for (int i = 0; i < file_list.Count; i++)
+                {
+                    Console.WriteLine(file_list[i]);
+                    Console.WriteLine(IsImageFile(file_list[i]));
+                }
+
+                Order com;
+                foreach (string element in file_list)
+                {
+                    com.order = @"waifu2x-converter-cpp";
+                    com.option = @"-i " + element + " -o " + OUTPUT_DIR_PATH + @"/" + Path.GetFileName(element) + " -m noise-scale --noise-level 1 --scale-ratio 1.5 -c 0";
+                    ExecOrder(com);
+
+                    File.Delete(element);
+                }
             }
 
         }
 
         public static int FileTimer(ref List<string> files)
         {
-        while (true)
+            string ip_string = GetServerAddress();
+            while (true)
         {
                 try
                 {
@@ -48,6 +56,7 @@ class MainClass
                     if (names.Length == 0)
                     {
                         Console.WriteLine("no files");
+                        Console.WriteLine("server IP:"+ip_string);
                         System.Threading.Thread.Sleep(1000);
                     }
                     else
@@ -91,5 +100,30 @@ class MainClass
             return 0;
         }
 
+        private static string GetServerAddress()
+        {
+            String hostName = Dns.GetHostName();    // 自身のホスト名を取得
+            IPAddress[] addresses = Dns.GetHostAddresses(hostName);
+            foreach (IPAddress address in addresses)
+            {
+                // IPv4 のみを追加する
+                if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                {
+                    return address.ToString();
+                }
+            }
+            return "IP Address is not found";
+        }
+
+        private static bool IsImageFile(string fullPath)
+        {
+            string[] extList = { ".jpg", ".JPG", ".png", ".bmp", ".webp"};
+            string ext = System.IO.Path.GetExtension(fullPath);
+            foreach (string en in extList)
+            {
+                if (ext == en) return true;
+            }
+            return false;
+        }
     }
 }
